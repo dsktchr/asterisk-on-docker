@@ -1,0 +1,53 @@
+FROM ubuntu:22.04
+
+ARG ASTERISK_VERSION=19
+ARG ASTERISK_MINOR_VERSION=3.2
+ARG ASTERISK_USER=asterisk
+
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && apt-get install -y \
+    wget \
+    binutils-dev \
+    bison \
+    build-essential \
+    libedit-dev \
+    libxml2-dev \
+    libssl-dev \
+    libsqlite3-dev \
+    lua5.4 \
+    liblua5.4-dev \
+    uuid-dev \
+    subversion \
+    git 
+
+RUN cd usr/local/src \
+    && wget https://downloads.asterisk.org/pub/telephony/asterisk/asterisk-${ASTERISK_VERSION}-current.tar.gz \
+    && tar -zxvf asterisk-${ASTERISK_VERSION}-current.tar.gz \
+    && rm -rf asterisk-${ASTERISK_VERSION}-current.tar.gz \
+    && cd asterisk-${ASTERISK_VERSION}.${ASTERISK_MINOR_VERSION} \
+    && ./configure --with-jansson-bundled \
+    && make menuselect.makeopts \
+    && menuselect/menuselect --enable format_mp3 --enable CORE-SOUNDS-JA-WAV --disable BUILD_NATIVE menuselect.makeopts \
+    && make \
+    && contrib/scripts/get_mp3_source.sh \
+    && make install \
+    && make samples
+
+RUN useradd -M -U -s /bin/bash ${ASTERISK_USER} \
+    && chown -R ${ASTERISK_USER}:${ASTERISK_USER} /usr/lib/asterisk \
+    && chown -R ${ASTERISK_USER}:${ASTERISK_USER} /var/lib/asterisk \
+    && chown -R ${ASTERISK_USER}:${ASTERISK_USER} /var/spool/asterisk \
+    && chown -R ${ASTERISK_USER}:${ASTERISK_USER} /var/log/asterisk \
+    && chown -R ${ASTERISK_USER}:${ASTERISK_USER} /var/run/asterisk \
+    && chown ${ASTERISK_USER}:${ASTERISK_USER} /usr/sbin/asterisk 
+
+COPY config/* /etc/asterisk/
+
+COPY docker-entrypoint.sh .
+
+RUN chmod +x docker-entrypoint.sh
+
+USER $ASTERISK_USER
+
+ENTRYPOINT [ "./docker-entrypoint.sh" ]
