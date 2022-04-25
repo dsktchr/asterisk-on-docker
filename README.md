@@ -114,7 +114,8 @@ $ docker run --name asterisk-server --rm --network host asterisk:dev
 
 ##### パターン2について
 ホスト端末のポート等を共有する方法です。
-[詳しくはこちら](https://matuand.github.io/docs.docker.jp.onthefly/network/host)
+<br>
+[詳しくはこちら](https://docs.docker.com/network/host/)
 <br>
 ユーザーランドプロキシとかいう聞きなれないワードが出てきましたね...
 <br>
